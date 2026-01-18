@@ -24,12 +24,13 @@ genai.configure(api_key=GEMINI_API_KEY)
 # --- ฟังก์ชันดึงข้อมูลจาก Google Doc ---
 def fetch_ward_knowledge():
     try:
-        url = f"[https://docs.google.com/document/d/](https://docs.google.com/document/d/){GOOGLE_DOC_ID}/export?format=txt"
+        # แก้ไข URL ให้ถูกต้อง (ลบ Markdown tags ออก)
+        url = f"https://docs.google.com/document/d/{GOOGLE_DOC_ID}/export?format=txt"
         response = requests.get(url)
         if response.status_code == 200:
             content = response.text
             # ตรวจสอบว่าติดหน้า Login หรือไม่
-            if "[google.com/accounts](https://google.com/accounts)" in content or "<html" in content[:100]:
+            if "google.com/accounts" in content or "<html" in content[:100]:
                 return "Error: Doc is Private. Please share as 'Anyone with the link'."
             return content
         else:
