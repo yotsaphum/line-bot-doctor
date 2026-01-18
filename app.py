@@ -15,7 +15,107 @@ logging.basicConfig(level=logging.INFO)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-GOOGLE_DOC_ID = "1-5sv2IDXNZVIOMagq84VecbR7ZxCh9-M7SGcGcYMNRc" # ไอดี Doc ของคุณ
+GOOGLE_DOC_ID = "1-5sv2IDXNZVIOMagq84VecbR7ZxCh9-M7SGcGcYMNRc" #import os
+import sys
+import logging
+import requests
+import traceback
+from flask import Flask, request, abort
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+import google.generativeai as genai
+
+app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
+
+# --- กุญแจ ---
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
+LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+GOOGLE_DOC_ID = "1-5sv2IDXNZVIOMagq84VecbR7ZxCh9-M7SGcGcYMNRc"
+
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
+genai.configure(api_key=GEMINI_API_KEY)
+
+# --- ฟังก์ชันดึงความรู้ (แบบเช็คละเอียด) ---
+def fetch_ward_knowledge():
+    try:
+        url = f"https://docs.google.com/document/d/{GOOGLE_DOC_ID}/export?format=txt"
+        response = requests.get(url)
+        if response.status_code == 200:
+            content = response.text
+            # เช็คว่าเนื้อหาไม่ใช่หน้า Login (ถ้า Private มันจะเด้งไปหน้า Login HTML ยาวๆ)
+            if "google.com/accounts" in content or "<html" in content[:100]:
+                return "❌ Error: Google Doc เป็น Private (อ่านไม่ได้) กรุณาเปิดแชร์เป็น 'Anyone with the link'"
+            return content
+        else:
+            return f"❌ Error: เข้าถึง Doc ไม่ได้ (Status Code: {response.status_code})"
+    except Exception as e:
+        return f"❌ Error Exception: {str(e)}"
+
+# โหลดข้อมูล
+WARD_KNOWLEDGE_BASE = fetch_ward_knowledge()
+
+MODEL_LIST = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+
+@app.route("/", methods=['GET'])
+def home():
+    # โชว์สถานะ Doc ที่หน้าเว็บด้วย
+    status = "✅ Doc OK" if "Error" not in WARD_KNOWLEDGE_BASE else "❌ Doc Error"
+    return f"<h1>LINE Bot Debug Mode</h1><p>Doc Status: {status}</p><p>Preview: {WARD_KNOWLEDGE_BASE[:200]}</p>"
+
+@app.route("/callback", methods=['POST'])
+def callback():
+    signature = request.headers.get('X-Line-Signature', '')
+    body = request.get_data(as_text=True)
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    return 'OK'
+
+def generate_answer(user_msg):
+    # ตรวจสอบก่อนว่า Doc พังไหม ถ้าพังให้ฟ้องเลย
+    if "Error" in WARD_KNOWLEDGE_BASE:
+        return f"⚠️ ระบบขัดข้องที่ Google Doc ครับ:\n{WARD_KNOWLEDGE_BASE}"
+
+    system_prompt = f"""
+    คุณคือพี่รหัส AI ตอบคำถามน้องๆ โดยใช้ข้อมูลนี้:
+    {WARD_KNOWLEDGE_BASE}
+    (ถ้าไม่มีข้อมูลให้ตอบว่าไม่ทราบ)
+    """
+    full_prompt = f"{system_prompt}\n\nคำถาม: {user_msg}"
+    
+    last_error = ""
+    for model_name in MODEL_LIST:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(full_prompt)
+            if response.text:
+                return response.text
+        except Exception as e:
+            last_error = str(e)
+            continue
+            
+    # ถ้าหลุดลูปมาได้ แปลว่าพังทุกตัว -> ส่ง Error กลับไปให้ User ดูเลย
+    return f"😵 พี่มึนจ้ะ (AI Error)\nสาเหตุ: {last_error}\n(ลองเช็ค API Key หรือโควต้าดูนะ)"
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    user_msg = event.message.text.strip()
+    try:
+        reply_text = generate_answer(user_msg)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+    except Exception as e:
+        # ดักจับ Error ระดับโปรแกรม
+        error_msg = f"💥 System Crash: {str(e)}"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=error_msg))
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)ไอดี Doc ของคุณ
 
 if not all([LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, GEMINI_API_KEY]):
     app.logger.error("❌ กุญแจไม่ครบ!")
