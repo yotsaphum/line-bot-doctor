@@ -1,5 +1,3 @@
-Force Rebuild: Add Knowledge Base
-
 flask
 line-bot-sdk
 google-generativeai>=0.8.3
