@@ -24,12 +24,10 @@ genai.configure(api_key=GEMINI_API_KEY)
 # --- ฟังก์ชันดึงข้อมูลจาก Google Doc ---
 def fetch_ward_knowledge():
     try:
-        # แก้ไข URL ให้ถูกต้อง (ลบ Markdown tags ออก)
         url = f"https://docs.google.com/document/d/{GOOGLE_DOC_ID}/export?format=txt"
         response = requests.get(url)
         if response.status_code == 200:
             content = response.text
-            # ตรวจสอบว่าติดหน้า Login หรือไม่
             if "google.com/accounts" in content or "<html" in content[:100]:
                 return "Error: Doc is Private. Please share as 'Anyone with the link'."
             return content
@@ -59,32 +57,42 @@ def callback():
     return 'OK'
 
 def generate_answer(user_msg):
-    # ถ้า Doc มีปัญหา ให้แจ้งเตือน
+    # 1. เช็ค Doc ก่อนเลย
     if "Error" in WARD_KNOWLEDGE_BASE:
         return f"⚠️ ระบบเอกสารมีปัญหา: {WARD_KNOWLEDGE_BASE}"
 
-    # Prompt สำหรับ Gemini
+    # 2. เตรียมคำสั่ง
+    # ตัดเนื้อหา Doc ให้ไม่เกิน 30,000 ตัวอักษร เพื่อป้องกัน Error เรื่องความยาว (Token Limit)
+    safe_knowledge = WARD_KNOWLEDGE_BASE[:30000]
+    
     system_prompt = f"""
     Role: Senior Medical Student Mentor (Thai Language)
     Task: Answer questions based on the provided Ward Knowledge.
     Condition: If info is missing, say you don't know but give general advice. Use Emojis.
     
     Ward Knowledge:
-    {WARD_KNOWLEDGE_BASE}
+    {safe_knowledge}
     """
     
     full_prompt = f"{system_prompt}\n\nQuestion: {user_msg}"
     
+    last_errors = []
+    
+    # 3. ลองรันทีละโมเดล พร้อมเก็บ Error
     for model_name in MODEL_LIST:
         try:
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(full_prompt)
             if response.text:
                 return response.text
-        except:
+        except Exception as e:
+            # บันทึก Error ไว้ฟ้อง User
+            last_errors.append(f"[{model_name}]: {str(e)}")
             continue
             
-    return "พี่มึนๆ นิดหน่อย (AI Error) ทักใหม่นะจ๊ะ 😅"
+    # 4. ถ้าพังหมด ให้คาย Error ออกมาให้หมด
+    error_summary = "\n".join(last_errors)
+    return f"พี่มึนๆ นิดหน่อย (AI Error) ทักใหม่นะจ๊ะ 😅\n\nสาเหตุ (แคปให้คนแก้ดู):\n{error_summary}"
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -93,7 +101,7 @@ def handle_message(event):
         reply_text = generate_answer(user_msg)
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="System Error"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"System Crash: {str(e)}"))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
