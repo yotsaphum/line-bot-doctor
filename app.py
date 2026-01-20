@@ -39,7 +39,8 @@ def fetch_ward_knowledge():
 # โหลดข้อมูลเก็บใส่ตัวแปร
 WARD_KNOWLEDGE_BASE = fetch_ward_knowledge()
 
-MODEL_LIST = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+# --- รายชื่อโมเดล (เพิ่ม 2.5 ตามที่ขอ และตัวอื่นๆ) ---
+MANUAL_MODEL_LIST = ['gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
 
 @app.route("/", methods=['GET'])
 def home():
@@ -56,13 +57,49 @@ def callback():
         abort(400)
     return 'OK'
 
+def get_working_model(full_prompt):
+    """ฟังก์ชันกุญแจผี V2: หาโมเดลที่ใช้ได้จริงจากการถาม Server โดยตรง"""
+    last_errors = []
+
+    # 1. ลองหาจากการถาม Google โดยตรง (ListModels) ตามคำแนะนำ Error
+    try:
+        app.logger.info("🔍 กำลังค้นหาโมเดลอัตโนมัติ (Auto-Discovery)...")
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                model_name = m.name
+                app.logger.info(f"➡️ พบโมเดล: {model_name} -> ลองทดสอบ...")
+                try:
+                    model = genai.GenerativeModel(model_name)
+                    response = model.generate_content(full_prompt)
+                    if response.text:
+                        return response.text
+                except Exception as e:
+                    app.logger.error(f"❌ {model_name} ใช้ไม่ได้: {e}")
+                    continue
+    except Exception as e:
+        app.logger.error(f"⚠️ Auto-Discovery Failed: {e}")
+
+    # 2. ถ้าหาเองไม่เจอ ให้ลองวนลูปตามรายชื่อที่เราเตรียมไว้ (Manual List)
+    app.logger.info("🔄 Auto-Discovery ไม่สำเร็จ ใช้รายชื่อสำรอง...")
+    for model_name in MANUAL_MODEL_LIST:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(full_prompt)
+            if response.text:
+                return response.text
+        except Exception as e:
+            last_errors.append(f"[{model_name}]: {str(e)}")
+            continue
+            
+    # 3. ถ้าพังหมดจริงๆ
+    return f"พี่มึนๆ นิดหน่อย (AI Error) ทักใหม่นะจ๊ะ 😅\n\nสาเหตุ:\n" + "\n".join(last_errors)
+
 def generate_answer(user_msg):
-    # 1. เช็ค Doc ก่อนเลย
+    # 1. เช็ค Doc
     if "Error" in WARD_KNOWLEDGE_BASE:
         return f"⚠️ ระบบเอกสารมีปัญหา: {WARD_KNOWLEDGE_BASE}"
 
     # 2. เตรียมคำสั่ง
-    # ตัดเนื้อหา Doc ให้ไม่เกิน 30,000 ตัวอักษร เพื่อป้องกัน Error เรื่องความยาว (Token Limit)
     safe_knowledge = WARD_KNOWLEDGE_BASE[:30000]
     
     system_prompt = f"""
@@ -76,23 +113,8 @@ def generate_answer(user_msg):
     
     full_prompt = f"{system_prompt}\n\nQuestion: {user_msg}"
     
-    last_errors = []
-    
-    # 3. ลองรันทีละโมเดล พร้อมเก็บ Error
-    for model_name in MODEL_LIST:
-        try:
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(full_prompt)
-            if response.text:
-                return response.text
-        except Exception as e:
-            # บันทึก Error ไว้ฟ้อง User
-            last_errors.append(f"[{model_name}]: {str(e)}")
-            continue
-            
-    # 4. ถ้าพังหมด ให้คาย Error ออกมาให้หมด
-    error_summary = "\n".join(last_errors)
-    return f"พี่มึนๆ นิดหน่อย (AI Error) ทักใหม่นะจ๊ะ 😅\n\nสาเหตุ (แคปให้คนแก้ดู):\n{error_summary}"
+    # 3. เรียกฟังก์ชันหาโมเดล
+    return get_working_model(full_prompt)
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
