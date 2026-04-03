@@ -5,13 +5,15 @@ import requests
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, PostbackEvent, ImageSendMessage
 import google.generativeai as genai
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# --- ส่วนตั้งค่ากุญแจ ---
+# ==========================================
+# 🔴 ส่วนตั้งค่ากุญแจ
+# ==========================================
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -21,7 +23,9 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 genai.configure(api_key=GEMINI_API_KEY)
 
-# --- ฟังก์ชันดึงข้อมูลจาก Google Doc ---
+# ==========================================
+# 🧠 ฟังก์ชันดึงข้อมูลจาก Google Doc (ระบบเก่า ยังอยู่ครบ)
+# ==========================================
 def fetch_ward_knowledge():
     try:
         url = f"https://docs.google.com/document/d/{GOOGLE_DOC_ID}/export?format=txt"
@@ -36,16 +40,13 @@ def fetch_ward_knowledge():
     except Exception as e:
         return f"Error: {str(e)}"
 
-# โหลดข้อมูลเก็บใส่ตัวแปร
 WARD_KNOWLEDGE_BASE = fetch_ward_knowledge()
-
-# --- รายชื่อโมเดล ---
 MANUAL_MODEL_LIST = ['gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
 
 @app.route("/", methods=['GET'])
 def home():
     status = "OK" if "Error" not in WARD_KNOWLEDGE_BASE else "Error"
-    return f"<h1>Bot Status: {status}</h1>"
+    return f"<h1>Bot Status: {status} (Rich Menu & AI Order Ready)</h1>"
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -58,45 +59,33 @@ def callback():
     return 'OK'
 
 def get_working_model(full_prompt):
-    """ฟังก์ชันกุญแจผี V2: หาโมเดลที่ใช้ได้จริง"""
     last_errors = []
-
-    # 1. Auto-Discovery
     try:
-        app.logger.info("🔍 Auto-Discovery Models...")
         for m in genai.list_models():
             if 'generateContent' in m.supported_generation_methods:
                 model_name = m.name
                 try:
                     model = genai.GenerativeModel(model_name)
                     response = model.generate_content(full_prompt)
-                    if response.text:
-                        return response.text
-                except:
-                    continue
-    except Exception as e:
-        app.logger.error(f"⚠️ Auto-Discovery Failed: {e}")
+                    if response.text: return response.text
+                except: continue
+    except: pass
 
-    # 2. Manual List Fallback
     for model_name in MANUAL_MODEL_LIST:
         try:
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(full_prompt)
-            if response.text:
-                return response.text
+            if response.text: return response.text
         except Exception as e:
             last_errors.append(f"[{model_name}]: {str(e)}")
             continue
-            
-    return f"พี่มึนๆ นิดหน่อย (AI Error) ทักใหม่นะจ๊ะ 😅\n\nสาเหตุ:\n" + "\n".join(last_errors)
+    return f"พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅"
 
 def generate_answer(user_msg):
     if "Error" in WARD_KNOWLEDGE_BASE:
         return f"⚠️ ระบบเอกสารมีปัญหา: {WARD_KNOWLEDGE_BASE}"
-
     safe_knowledge = WARD_KNOWLEDGE_BASE[:30000]
     
-    # --- ปรับ System Prompt ใหม่ตามความต้องการ ---
     system_prompt = f"""
     Role: ผู้ช่วยแพทย์อัจฉริยะ (Medical Order Assistant)
     
@@ -115,22 +104,15 @@ def generate_answer(user_msg):
     3. หากไม่พบข้อมูลใน Ward Knowledge:
        - ให้ตอบว่า "ไม่พบข้อมูลนี้ค่ะ" เท่านั้น ห้ามคิดเอง
     
-    ตัวอย่างการตอบ (กรณีถาม Order):
-    User: ปวด
-    AI:
-    Order แก้ปวด:
-    - Paracetamol (500) 1 tab po prn q 4-6 h
-    - Morphine 3 mg IV q 4-6 h
-    - Fentanyl 25 mcg IV q 4-6 hr
-    
     Ward Knowledge:
     {safe_knowledge}
     """
-    
     full_prompt = f"{system_prompt}\n\nQuestion: {user_msg}"
-    
     return get_working_model(full_prompt)
 
+# ==========================================
+# 🎯 ส่วนที่ 1: แชท AI (ตอบออเดอร์ยา/ปรึกษา)
+# ==========================================
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_msg = event.message.text.strip()
@@ -139,6 +121,56 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"System Crash: {str(e)}"))
+
+# ==========================================
+# 🎯 ส่วนที่ 2: ระบบรับการกดปุ่มเมนู (ส่งรูปภาพ/ส่งข้อความ)
+# ==========================================
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    data = event.postback.data
+    
+    try:
+        # 1. ระบบส่งรูปภาพ (เวลากดช่อง 1 ในหน้าวอร์ด)
+        if data.startswith('send_image_'):
+            ward_name = data.split('_')[2]
+            
+            # 🔴 คุณต้องเอาลิงก์รูปแนะนำวอร์ด (ไฟล์ .jpg/.png) มาใส่ที่นี่
+            ward_images = {
+                "med": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
+                "surg": "https://i.imgur.com/KxYZ8qB.jpg",     # ตัวอย่างลิงก์
+                "obgyn": "https://i.imgur.com/KxYZ8qB.jpg",    # ตัวอย่างลิงก์
+                "ped": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
+                "rehab": "https://i.imgur.com/KxYZ8qB.jpg",    # ตัวอย่างลิงก์
+                "ent": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
+                "forensic": "https://i.imgur.com/KxYZ8qB.jpg", # ตัวอย่างลิงก์
+                "commed": "https://i.imgur.com/KxYZ8qB.jpg"    # ตัวอย่างลิงก์
+            }
+            
+            img_url = ward_images.get(ward_name, "https://i.imgur.com/KxYZ8qB.jpg")
+            
+            image_message = ImageSendMessage(
+                original_content_url=img_url,
+                preview_image_url=img_url
+            )
+            line_bot_api.reply_message(event.reply_token, image_message)
+
+        # 2. ตอบกลับเวลากดปุ่ม "วิธีใช้"
+        elif data == 'action_howto':
+            msg = "วิธีใช้งานบอทพี่รหัส 💖\n1. พิมพ์อาการหรือภาวะ (เช่น Kต่ำ) เพื่อดู Order ได้เลย\n2. กดเมนูเพื่อค้นหาเอกสารแยกวอร์ด"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=msg))
+            
+        # 3. ตอบกลับเวลากดปุ่ม "Order ใช้บ่อย"
+        elif data == 'action_common_order':
+            msg = "พิมพ์อาการหรือภาวะที่ต้องการหาออเดอร์มาได้เลยจ้า เช่น ปวด, Kต่ำ, Caต่ำ 💊"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=msg))
+            
+        # 4. ตอบกลับเวลากดปุ่ม "ปรึกษา"
+        elif data == 'action_consult':
+            msg = "มีอะไรอยากปรึกษา หรืออยากให้ช่วยหาข้อมูลในวอร์ด พิมพ์ถามมาได้เลยนะ พี่สแตนด์บายจ้า 💖"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=msg))
+
+    except Exception as e:
+        app.logger.error(f"Postback Error: {e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
