@@ -136,7 +136,7 @@ def handle_postback(event):
             
             # 🔴 คุณต้องเอาลิงก์รูปแนะนำวอร์ด (ไฟล์ .jpg/.png) มาใส่ที่นี่
             ward_images = {
-                "med": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
+                "med": "https://ibb.co/RwVbYvm.jpg",      # ตัวอย่างลิงก์
                 "surg": "https://i.imgur.com/KxYZ8qB.jpg",     # ตัวอย่างลิงก์
                 "obgyn": "https://i.imgur.com/KxYZ8qB.jpg",    # ตัวอย่างลิงก์
                 "ped": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
