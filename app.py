@@ -140,10 +140,10 @@ def handle_postback(event):
                 "surg": "https://i.ibb.co/bRmbCrn3/Gemini-Generated-Image-8858zn8858zn8858.png",     # ตัวอย่างลิงก์
                 "obgyn": "https://i.ibb.co/QBzL0R8/Gemini-Generated-Image-yefn6uyefn6uyefn.png",    # ตัวอย่างลิงก์
                 "ped": "https://i.ibb.co/wF7gwkKf/Gemini-Generated-Image-ldfokcldfokcldfo.png",      # ตัวอย่างลิงก์
-                "rehab": "https://i.imgur.com/KxYZ8qB.jpg",    # ตัวอย่างลิงก์
-                "ent": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
+                "rehab": "https://i.ibb.co/gL2Bb2pf/Gemini-Generated-Image-490woq490woq490w.png",    # ตัวอย่างลิงก์
+                "ent": "https://i.ibb.co/KxC8LxWZ/Gemini-Generated-Image-b6ti71b6ti71b6ti.png",      # ตัวอย่างลิงก์
                 "forensic": "https://i.imgur.com/KxYZ8qB.jpg", # ตัวอย่างลิงก์
-                "commed": "https://i.imgur.com/KxYZ8qB.jpg"    # ตัวอย่างลิงก์
+                "commed": "https://i.ibb.co/kVGVFjxg/Gemini-Generated-Image-wx1ccawx1ccawx1c.png"    # ตัวอย่างลิงก์
             }
             
             img_url = ward_images.get(ward_name, "https://i.imgur.com/KxYZ8qB.jpg")
