@@ -138,8 +138,8 @@ def handle_postback(event):
             ward_images = {
                 "med": "https://i.ibb.co/G3NML7T6/Gemini-Generated-Image-5h0pm85h0pm85h0p.png",      # ตัวอย่างลิงก์
                 "surg": "https://i.ibb.co/bRmbCrn3/Gemini-Generated-Image-8858zn8858zn8858.png",     # ตัวอย่างลิงก์
-                "obgyn": "https://i.imgur.com/KxYZ8qB.jpg",    # ตัวอย่างลิงก์
-                "ped": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
+                "obgyn": "https://i.ibb.co/QBzL0R8/Gemini-Generated-Image-yefn6uyefn6uyefn.png",    # ตัวอย่างลิงก์
+                "ped": "https://i.ibb.co/wF7gwkKf/Gemini-Generated-Image-ldfokcldfokcldfo.png",      # ตัวอย่างลิงก์
                 "rehab": "https://i.imgur.com/KxYZ8qB.jpg",    # ตัวอย่างลิงก์
                 "ent": "https://i.imgur.com/KxYZ8qB.jpg",      # ตัวอย่างลิงก์
                 "forensic": "https://i.imgur.com/KxYZ8qB.jpg", # ตัวอย่างลิงก์
