@@ -142,7 +142,7 @@ def handle_postback(event):
                 "ped": "https://i.ibb.co/wF7gwkKf/Gemini-Generated-Image-ldfokcldfokcldfo.png",      # ตัวอย่างลิงก์
                 "rehab": "https://i.ibb.co/gL2Bb2pf/Gemini-Generated-Image-490woq490woq490w.png",    # ตัวอย่างลิงก์
                 "ent": "https://i.ibb.co/KxC8LxWZ/Gemini-Generated-Image-b6ti71b6ti71b6ti.png",      # ตัวอย่างลิงก์
-                "forensic": "https://i.imgur.com/KxYZ8qB.jpg", # ตัวอย่างลิงก์
+                "forensic": "https://i.ibb.co/21xYTCf8/Gemini-Generated-Image-hzmr14hzmr14hzmr.png", # ตัวอย่างลิงก์
                 "commed": "https://i.ibb.co/kVGVFjxg/Gemini-Generated-Image-wx1ccawx1ccawx1c.png"    # ตัวอย่างลิงก์
             }
             
