@@ -123,51 +123,52 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"System Crash: {str(e)}"))
 
 # ==========================================
-# 🎯 ส่วนที่ 2: ระบบรับการกดปุ่มเมนู (ส่งรูปภาพ/ส่งข้อความ)
+# 🎯 ส่วนที่ 2: ระบบรับการกดปุ่มเมนู (ส่งรูปภาพ + ข้อความ)
 # ==========================================
 @handler.add(PostbackEvent)
 def handle_postback(event):
     data = event.postback.data
     
     try:
-        # 1. ระบบส่งรูปภาพ (เวลากดช่อง 1 ในหน้าวอร์ด)
+        # 1. ระบบส่งรูปภาพ + ข้อความ (เวลากดช่อง 1 ในหน้าวอร์ด)
         if data.startswith('send_image_'):
             ward_name = data.split('_')[2]
             
-            # 🔴 คุณต้องเอาลิงก์รูปแนะนำวอร์ด (ไฟล์ .jpg/.png) มาใส่ที่นี่
+            # 🔴 คลังเก็บลิงก์รูปแนะนำวอร์ด
             ward_images = {
-                "med": "https://i.ibb.co/G3NML7T6/Gemini-Generated-Image-5h0pm85h0pm85h0p.png",      # ตัวอย่างลิงก์
-                "surg": "https://i.ibb.co/bRmbCrn3/Gemini-Generated-Image-8858zn8858zn8858.png",     # ตัวอย่างลิงก์
-                "obgyn": "https://i.ibb.co/QBzL0R8/Gemini-Generated-Image-yefn6uyefn6uyefn.png",    # ตัวอย่างลิงก์
-                "ped": "https://i.ibb.co/wF7gwkKf/Gemini-Generated-Image-ldfokcldfokcldfo.png",      # ตัวอย่างลิงก์
-                "rehab": "https://i.ibb.co/gL2Bb2pf/Gemini-Generated-Image-490woq490woq490w.png",    # ตัวอย่างลิงก์
-                "ent": "https://i.ibb.co/KxC8LxWZ/Gemini-Generated-Image-b6ti71b6ti71b6ti.png",      # ตัวอย่างลิงก์
-                "forensic": "https://i.ibb.co/21xYTCf8/Gemini-Generated-Image-hzmr14hzmr14hzmr.png", # ตัวอย่างลิงก์
-                "commed": "https://i.ibb.co/kVGVFjxg/Gemini-Generated-Image-wx1ccawx1ccawx1c.png"    # ตัวอย่างลิงก์
+                "med": "https://i.ibb.co/G3NML7T6/Gemini-Generated-Image-5h0pm85h0pm85h0p.png",
+                "surg": "https://i.ibb.co/bRmbCrn3/Gemini-Generated-Image-8858zn8858zn8858.png",
+                "obgyn": "https://i.ibb.co/QBzL0R8/Gemini-Generated-Image-yefn6uyefn6uyefn.png",
+                "ped": "https://i.ibb.co/wF7gwkKf/Gemini-Generated-Image-ldfokcldfokcldfo.png",
+                "rehab": "https://i.ibb.co/gL2Bb2pf/Gemini-Generated-Image-490woq490woq490w.png",
+                "ent": "https://i.ibb.co/KxC8LxWZ/Gemini-Generated-Image-b6ti71b6ti71b6ti.png",
+                "forensic": "https://i.ibb.co/21xYTCf8/Gemini-Generated-Image-hzmr14hzmr14hzmr.png",
+                "commed": "https://i.ibb.co/kVGVFjxg/Gemini-Generated-Image-wx1ccawx1ccawx1c.png"
             }
+            img_url = ward_images.get(ward_name, "https://i.ibb.co/G3NML7T6/Gemini-Generated-Image-5h0pm85h0pm85h0p.png")
             
-            img_url = ward_images.get(ward_name, "https://i.imgur.com/KxYZ8qB.jpg")
-            
+            # 🔴 คลังเก็บข้อความต้อนรับของแต่ละวอร์ด (แก้ภาษาไทยได้เลย!)
+            ward_texts = {
+                "med": "ยินดีต้อนรับสู่วอร์ดอายุรกรรม (Med) จ้า 🩺\nขอให้สนุกกับการเรียนนะ!",
+                "surg": "ยินดีต้อนรับสู่วอร์ดศัลยกรรม (Surg) จ้า 🔪\nเตรียมตัวให้พร้อม สู้ๆ!",
+                "obgyn": "ยินดีต้อนรับสู่วอร์ดสูตินรีเวช (OBGYN) จ้า 👶\nสู้ๆ นะน้องหมอ!",
+                "ped": "ยินดีต้อนรับสู่วอร์ดกุมารเวชกรรม (Ped) จ้า 🍼\nเด็กๆ น่ารัก สู้ๆ นะ!",
+                "rehab": "ยินดีต้อนรับสู่วอร์ดเวชศาสตร์ฟื้นฟู (Rehab) จ้า 🏃\nลุยเลยจ้า!",
+                "ent": "ยินดีต้อนรับสู่วอร์ดหูคอจมูก (ENT) จ้า 👂\nขอให้โชคดีนะ!",
+                "forensic": "ยินดีต้อนรับสู่วอร์ดนิติเวช (Forensic) จ้า 🕵️\nเรียนรู้ให้เต็มที่เลย!",
+                "commed": "ยินดีต้อนรับสู่วอร์ดเวชศาสตร์ชุมชน (Commed) จ้า 🏘️\nลุยชุมชนให้สนุกนะ!"
+            }
+            text_msg = ward_texts.get(ward_name, "ยินดีต้อนรับสู่วอร์ดจ้า 💖\nสู้ๆ นะ!")
+
+            # เตรียมข้อความรูปภาพ และ ข้อความตัวหนังสือ
             image_message = ImageSendMessage(
                 original_content_url=img_url,
                 preview_image_url=img_url
             )
-            line_bot_api.reply_message(event.reply_token, image_message)
+            text_message = TextSendMessage(text=text_msg)
 
-        # 2. ตอบกลับเวลากดปุ่ม "วิธีใช้"
-        elif data == 'action_howto':
-            msg = "วิธีใช้งานบอทพี่รหัส 💖\n1. พิมพ์อาการหรือภาวะ (เช่น Kต่ำ) เพื่อดู Order ได้เลย\n2. กดเมนูเพื่อค้นหาเอกสารแยกวอร์ด"
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=msg))
-            
-        # 3. ตอบกลับเวลากดปุ่ม "Order ใช้บ่อย"
-        elif data == 'action_common_order':
-            msg = "พิมพ์อาการหรือภาวะที่ต้องการหาออเดอร์มาได้เลยจ้า เช่น ปวด, Kต่ำ, Caต่ำ 💊"
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=msg))
-            
-        # 4. ตอบกลับเวลากดปุ่ม "ปรึกษา"
-        elif data == 'action_consult':
-            msg = "มีอะไรอยากปรึกษา หรืออยากให้ช่วยหาข้อมูลในวอร์ด พิมพ์ถามมาได้เลยนะ พี่สแตนด์บายจ้า 💖"
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=msg))
+            # ส่งกลับไปพร้อมกัน 2 อย่าง (รูป + ข้อความ)
+            line_bot_api.reply_message(event.reply_token, [image_message, text_message])
 
     except Exception as e:
         app.logger.error(f"Postback Error: {e}")
