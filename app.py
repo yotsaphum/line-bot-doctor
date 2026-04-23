@@ -149,14 +149,14 @@ def handle_postback(event):
             
             # 🔴 คลังเก็บข้อความต้อนรับของแต่ละวอร์ด (แก้ภาษาไทยได้เลย!)
             ward_texts = {
-                "med": "ยินดีต้อนรับสู่วอร์ดอายุรกรรม (Med) จ้า 🩺\nขอให้สนุกกับการเรียนนะ!",
-                "surg": "ยินดีต้อนรับสู่วอร์ดศัลยกรรม (Surg) จ้า 🔪\nเตรียมตัวให้พร้อม สู้ๆ!",
-                "obgyn": "ยินดีต้อนรับสู่วอร์ดสูตินรีเวช (OBGYN) จ้า 👶\nสู้ๆ นะน้องหมอ!",
-                "ped": "ยินดีต้อนรับสู่วอร์ดกุมารเวชกรรม (Ped) จ้า 🍼\nเด็กๆ น่ารัก สู้ๆ นะ!",
-                "rehab": "ยินดีต้อนรับสู่วอร์ดเวชศาสตร์ฟื้นฟู (Rehab) จ้า 🏃\nลุยเลยจ้า!",
-                "ent": "ยินดีต้อนรับสู่วอร์ดหูคอจมูก (ENT) จ้า 👂\nขอให้โชคดีนะ!",
-                "forensic": "ยินดีต้อนรับสู่วอร์ดนิติเวช (Forensic) จ้า 🕵️\nเรียนรู้ให้เต็มที่เลย!",
-                "commed": "ยินดีต้อนรับสู่วอร์ดเวชศาสตร์ชุมชน (Commed) จ้า 🏘️\nลุยชุมชนให้สนุกนะ!"
+                "med": "ยินดีต้อนรับสู่วอร์ดอายุรกรรม (Med) จ้า 🩺\nขอให้สนุกกับการเรียนนะ!\n \nSurvival guide MED ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/19LXhe-klT2OP-CydKMffpB3GhCB1qIo3/view?usp=drive_link",
+                "surg": "ยินดีต้อนรับสู่วอร์ดศัลยกรรม (Surg) จ้า 🔪\nเตรียมตัวให้พร้อม สู้ๆ!\n \nSurvival guide Surg ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/10_469aJQifhtpjXE82PF-kaQAYMm2dod/view?usp=drive_link",
+                "obgyn": "ยินดีต้อนรับสู่วอร์ดสูตินรีเวช (OBGYN) จ้า 👶\nสู้ๆ นะน้องหมอ!\n \nSurvival guide OBGYN ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/1k3hhjwwYOz6bpatTv7kT9n84O1LMlwtN/view?usp=drive_link",
+                "ped": "ยินดีต้อนรับสู่วอร์ดกุมารเวชกรรม (Ped) จ้า 🍼\nเด็กๆ น่ารัก สู้ๆ นะ!\n \nSurvival guide Ped ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/1AZ4b5Xi5RAtT-MgLetihuyuSTrAI6SIg/view?usp=drive_link",
+                "rehab": "ยินดีต้อนรับสู่วอร์ดเวชศาสตร์ฟื้นฟู (Rehab) จ้า 🏃\nลุยเลยจ้า!\n \nSurvival guide Rehab ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/18la53uxr3rfhbtcRXHv6Q2I35nEZbP40/view?usp=drive_link",
+                "ent": "ยินดีต้อนรับสู่วอร์ดหูคอจมูก (ENT) จ้า 👂\nขอให้โชคดีนะ!\n \nSurvival guide ENT ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/18la53uxr3rfhbtcRXHv6Q2I35nEZbP40/view?usp=drive_link",
+                "forensic": "ยินดีต้อนรับสู่วอร์ดนิติเวช (Forensic) จ้า 🕵️\nเรียนรู้ให้เต็มที่เลย!\n \nSurvival guide Forensic ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/18la53uxr3rfhbtcRXHv6Q2I35nEZbP40/view?usp=drive_link",
+                "commed": "ยินดีต้อนรับสู่วอร์ดเวชศาสตร์ชุมชน (Commed) จ้า 🏘️\nลุยชุมชนให้สนุกนะ!\n \nSurvival guide Commed ลองอ่านดูเพื่อเพิ่มความเข้าใจจจ \nhttps://drive.google.com/file/d/18la53uxr3rfhbtcRXHv6Q2I35nEZbP40/view?usp=drive_link"
             }
             text_msg = ward_texts.get(ward_name, "ยินดีต้อนรับสู่วอร์ดจ้า 💖\nสู้ๆ นะ!")
 
