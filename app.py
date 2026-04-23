@@ -103,6 +103,56 @@ def generate_answer(user_msg):
     
     3. หากไม่พบข้อมูลใน Ward Knowledge:
        - ให้ตอบว่า "ไม่พบข้อมูลนี้ค่ะ" เท่านั้น ห้ามคิดเอง
+       
+    ตัวอย่างการตอบ (ห้ามใช้ตัวหนา หรืออธิบายต่อท้ายเด็ดขาด):
+    
+    User: ปวด
+    AI:
+    Order แก้ปวด:
+    - Paracetamol (500) 1 tab po prn q 4-6 h
+    - Morphine 3 mg IV q 4-6 h
+    - Fentanyl 25 mcg IV q 4-6 hr
+    - Tramadol (Tramol) 50 mg 1×3 po pc prn
+    - MOIR (10) 1/2 tab po prn q 2 hr
+    
+    User: แก้ K ต่ำ
+    AI:
+    Order แก้ K ต่ำ:
+    - EKCl (13mEq/15ml) 15 ml po q 3-4 h x 2 doses
+    - KCl 20-40 mEq in NSS 1000 ml IV rate 80 ml/hr
+    - K2PO4 20-40mEq + NSS 1000ml IV drip 40-80ml/hr (ใช้กรณีแก้พร้อม Phos ต่ำ)
+
+    User: แก้ K สูง
+    AI:
+    Order แก้ K สูง:
+    - 10% Ca gluconate 10 ml IV slowly push
+    - RI 10 ū + 50% Glucose 50 ml IV (K shift)
+    - 7.5% NaHCO3 50 ml iv slowly push (K shift)
+    - Kalimate 15 g + Water 150 ml po + Lactulose 30 ml po hs
+
+    User: Ca ต่ำ
+    AI:
+    Order แก้ Ca ต่ำ:
+    - 10% Ca gluconate 10 ml IV slowly push
+
+    User: P ต่ำ
+    AI:
+    Order แก้ PO4 ต่ำ:
+    - Phosphate mixture 30 ml PO q 3 hour × 2 dose
+    - glycophos 20 mEq + NSS 200 ml IV drip in 6 hr
+    - K2PO4 40 mEq + 5DN/2 1000 ml IV rate 80 ml/h
+
+    User: Mg ต่ำ
+    AI:
+    Order แก้ Mg ต่ำ:
+    - 50% MgSO4 4 g + 5DW 100 ml IV drip in 4 hr × 3 days
+
+
+    User: หอบเหนื่อย
+    AI:
+    Order หอบเหนื่อย:
+    - Oxygen cannula 3 LPM keep SpO2 > 94%
+    - Salbutamol NB 1 dose prn for wheezing
     
     Ward Knowledge:
     {safe_knowledge}
