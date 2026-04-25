@@ -41,8 +41,8 @@ def fetch_ward_knowledge():
         return f"Error: {str(e)}"
 
 WARD_KNOWLEDGE_BASE = fetch_ward_knowledge()
-# ⚡ ปรับให้ใช้รุ่น flash ก่อนเพื่อนเพราะตอบไวสุด
-MANUAL_MODEL_LIST = ['gemini-1.5-flash', 'gemini-2.5-pro', 'gemini-1.5-pro', 'gemini-pro']
+# ⚡ ปรับให้ใช้รุ่น 2.5-flash และ 1.5-flash-latest นำหน้า เพราะโควต้าฟรีเยอะกว่าและเร็วกว่า Pro มาก!
+MANUAL_MODEL_LIST = ['gemini-2.5-flash', 'gemini-1.5-flash-latest', 'gemini-2.5-pro']
 
 # ⚡ ตัวแปรความจำ: จำว่าโมเดลไหนใช้งานได้ จะได้ไม่ต้องหาใหม่ทุกรอบ
 WORKING_MODEL_NAME = None 
@@ -93,7 +93,7 @@ def get_working_model(full_prompt):
             
     # 🚨 ถ้ามาถึงตรงนี้แปลว่าพังทุกโมเดล ให้พ่น Error ลง Log เพื่อให้คนแก้ดูได้
     app.logger.error(f"🚨🚨 ALL MODELS FAILED! สาเหตุ: {last_errors}")
-    return f"พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅"
+    return "พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅"
 
 def generate_answer(user_msg):
     if "Error" in WARD_KNOWLEDGE_BASE:
