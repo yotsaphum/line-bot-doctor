@@ -73,7 +73,7 @@ def get_working_model(full_prompt):
             if response.text: 
                 return response.text
         except Exception as e:
-            app.logger.warning(f"Cached model {WORKING_MODEL_NAME} failed: {e}. Retrying...")
+            app.logger.error(f"❌ Cached model {WORKING_MODEL_NAME} failed: {e}. Retrying...")
             WORKING_MODEL_NAME = None # ถ้าพัง ค่อยล้างความจำแล้วหาใหม่
             
     last_errors = []
@@ -88,9 +88,12 @@ def get_working_model(full_prompt):
                 return response.text
         except Exception as e:
             last_errors.append(f"[{model_name}]: {str(e)}")
+            app.logger.error(f"❌ Model {model_name} Error: {str(e)}")
             continue
             
-    return f"พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅"
+    # 🚨 ถ้ามาถึงตรงนี้แปลว่าพังทุกโมเดล ให้พ่น Error ลง Log เพื่อให้คนแก้ดูได้
+    app.logger.error(f"🚨🚨 ALL MODELS FAILED! สาเหตุ: {last_errors}")
+    return f"พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅
 
 def generate_answer(user_msg):
     if "Error" in WARD_KNOWLEDGE_BASE:
