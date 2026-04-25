@@ -93,7 +93,7 @@ def get_working_model(full_prompt):
             
     # 🚨 ถ้ามาถึงตรงนี้แปลว่าพังทุกโมเดล ให้พ่น Error ลง Log เพื่อให้คนแก้ดูได้
     app.logger.error(f"🚨🚨 ALL MODELS FAILED! สาเหตุ: {last_errors}")
-    return f"พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅
+    return f"พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅"
 
 def generate_answer(user_msg):
     if "Error" in WARD_KNOWLEDGE_BASE:
