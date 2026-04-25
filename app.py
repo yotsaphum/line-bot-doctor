@@ -41,8 +41,8 @@ def fetch_ward_knowledge():
         return f"Error: {str(e)}"
 
 WARD_KNOWLEDGE_BASE = fetch_ward_knowledge()
-# ⚡ ปรับให้ใช้รุ่น 2.5-flash และ 1.5-flash-latest นำหน้า เพราะโควต้าฟรีเยอะกว่าและเร็วกว่า Pro มาก!
-MANUAL_MODEL_LIST = ['gemini-2.5-flash', 'gemini-1.5-flash-latest', 'gemini-2.5-pro']
+# ⚡ อัปเดตรายชื่อให้กว้างขึ้น ครอบคลุมทั้งรุ่นเก่าและใหม่
+MANUAL_MODEL_LIST = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.5-flash', 'gemini-1.0-pro']
 
 # ⚡ ตัวแปรความจำ: จำว่าโมเดลไหนใช้งานได้ จะได้ไม่ต้องหาใหม่ทุกรอบ
 WORKING_MODEL_NAME = None 
@@ -50,7 +50,7 @@ WORKING_MODEL_NAME = None
 @app.route("/", methods=['GET'])
 def home():
     status = "OK" if "Error" not in WARD_KNOWLEDGE_BASE else "Error"
-    return f"<h1>Bot Status: {status} (Playful AI + Speed Boost Ready)</h1>"
+    return f"<h1>Bot Status: {status} (Playful AI + Auto Discovery Ready)</h1>"
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -65,7 +65,7 @@ def callback():
 def get_working_model(full_prompt):
     global WORKING_MODEL_NAME
     
-    # ⚡ ถ้าจำได้ว่าโมเดลไหนเวิร์ก ให้ใช้โมเดลนั้นเลย (ไม่ต้องไปวนลูปหาให้เสียเวลา)
+    # 1. ⚡ ถ้าจำได้ว่าโมเดลไหนเวิร์ก ให้ใช้โมเดลนั้นเลย
     if WORKING_MODEL_NAME:
         try:
             model = genai.GenerativeModel(WORKING_MODEL_NAME)
@@ -73,12 +73,12 @@ def get_working_model(full_prompt):
             if response.text: 
                 return response.text
         except Exception as e:
-            app.logger.error(f"❌ Cached model {WORKING_MODEL_NAME} failed: {e}. Retrying...")
-            WORKING_MODEL_NAME = None # ถ้าพัง ค่อยล้างความจำแล้วหาใหม่
+            app.logger.warning(f"❌ Cached model {WORKING_MODEL_NAME} failed: {e}. Retrying...")
+            WORKING_MODEL_NAME = None 
             
     last_errors = []
     
-    # วนหาจาก Manual List ทันที (ตัดส่วน Auto-Discovery ที่ช้าทิ้งไป)
+    # 2. ลองไล่หาจาก Manual List ทันที
     for model_name in MANUAL_MODEL_LIST:
         try:
             model = genai.GenerativeModel(model_name)
@@ -88,12 +88,28 @@ def get_working_model(full_prompt):
                 return response.text
         except Exception as e:
             last_errors.append(f"[{model_name}]: {str(e)}")
-            app.logger.error(f"❌ Model {model_name} Error: {str(e)}")
             continue
             
-    # 🚨 ถ้ามาถึงตรงนี้แปลว่าพังทุกโมเดล ให้พ่น Error ลง Log เพื่อให้คนแก้ดูได้
+    # 3. 🛡️ โหมดไม้ตาย (Auto-Discovery): ถ้าพังหมด ให้ค้นหาว่ากุญแจนี้มีสิทธิ์ใช้รุ่นไหนบ้าง!
+    app.logger.info("🔍 Manual models failed. Auto-discovering available models...")
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                try:
+                    model = genai.GenerativeModel(m.name)
+                    response = model.generate_content(full_prompt)
+                    if response.text:
+                        WORKING_MODEL_NAME = m.name # จำไว้เลย!
+                        app.logger.info(f"✅ Auto-discovered working model: {m.name}")
+                        return response.text
+                except:
+                    continue
+    except Exception as e:
+        app.logger.error(f"Auto-discovery failed: {e}")
+
+    # 4. ถ้ามาถึงตรงนี้แปลว่าพังทุกโมเดล (ส่วนใหญ่คือโควต้าหมดเกลี้ยงจริงๆ)
     app.logger.error(f"🚨🚨 ALL MODELS FAILED! สาเหตุ: {last_errors}")
-    return "พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅"
+    return "พี่มึนๆ นิดหน่อย โควต้าฟรีน่าจะเต็มแล้วน้า ทักมาใหม่วันพรุ่งนี้นะจ๊ะ 😅"
 
 def generate_answer(user_msg):
     if "Error" in WARD_KNOWLEDGE_BASE:
