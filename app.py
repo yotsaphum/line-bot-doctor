@@ -41,12 +41,16 @@ def fetch_ward_knowledge():
         return f"Error: {str(e)}"
 
 WARD_KNOWLEDGE_BASE = fetch_ward_knowledge()
-MANUAL_MODEL_LIST = ['gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+# ⚡ ปรับให้ใช้รุ่น flash ก่อนเพื่อนเพราะตอบไวสุด
+MANUAL_MODEL_LIST = ['gemini-1.5-flash', 'gemini-2.5-pro', 'gemini-1.5-pro', 'gemini-pro']
+
+# ⚡ ตัวแปรความจำ: จำว่าโมเดลไหนใช้งานได้ จะได้ไม่ต้องหาใหม่ทุกรอบ
+WORKING_MODEL_NAME = None 
 
 @app.route("/", methods=['GET'])
 def home():
     status = "OK" if "Error" not in WARD_KNOWLEDGE_BASE else "Error"
-    return f"<h1>Bot Status: {status} (Rich Menu & AI Order Ready)</h1>"
+    return f"<h1>Bot Status: {status} (Playful AI + Speed Boost Ready)</h1>"
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -59,26 +63,33 @@ def callback():
     return 'OK'
 
 def get_working_model(full_prompt):
+    global WORKING_MODEL_NAME
+    
+    # ⚡ ถ้าจำได้ว่าโมเดลไหนเวิร์ก ให้ใช้โมเดลนั้นเลย (ไม่ต้องไปวนลูปหาให้เสียเวลา)
+    if WORKING_MODEL_NAME:
+        try:
+            model = genai.GenerativeModel(WORKING_MODEL_NAME)
+            response = model.generate_content(full_prompt)
+            if response.text: 
+                return response.text
+        except Exception as e:
+            app.logger.warning(f"Cached model {WORKING_MODEL_NAME} failed: {e}. Retrying...")
+            WORKING_MODEL_NAME = None # ถ้าพัง ค่อยล้างความจำแล้วหาใหม่
+            
     last_errors = []
-    try:
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                model_name = m.name
-                try:
-                    model = genai.GenerativeModel(model_name)
-                    response = model.generate_content(full_prompt)
-                    if response.text: return response.text
-                except: continue
-    except: pass
-
+    
+    # วนหาจาก Manual List ทันที (ตัดส่วน Auto-Discovery ที่ช้าทิ้งไป)
     for model_name in MANUAL_MODEL_LIST:
         try:
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(full_prompt)
-            if response.text: return response.text
+            if response.text: 
+                WORKING_MODEL_NAME = model_name # ⚡ จำไว้ใช้รอบหน้า!
+                return response.text
         except Exception as e:
             last_errors.append(f"[{model_name}]: {str(e)}")
             continue
+            
     return f"พี่มึนๆ นิดหน่อย ทักใหม่นะจ๊ะ 😅"
 
 def generate_answer(user_msg):
